@@ -14,13 +14,13 @@ state=${USAGE_GUARD_STATE_DIR:-$cfg/state}
 shared=${USAGE_GUARD_SHARED_DIR:-}
 hf=; [ -n "$shared" ] && hf=$shared/rate_limits.host-${USER:-u}-${HOSTNAME%%.*}.json
 in=$(cat)
-sid=x; [[ $in =~ \"session_id\"[[:space:]]*:[[:space:]]*\"([A-Za-z0-9_-]+)\" ]] && sid=${BASH_REMATCH[1]}
+sid=x; [[ $in =~ \"session_id\"[[:space:]]*:[[:space:]]*\"([A-Za-z0-9_-]+)\" ]] && sid=${BASH_REMATCH[1]:0:100}
 seenf=$state/statusline-$sid
 cur=; [ -n "$hf" ] && [ -f "$hf" ] && cur=$(<"$hf")
 loc=; [ -f "$f" ] && loc=$(<"$f")
 seen=; if [ -f "$seenf" ]; then seen=$(<"$seenf"); else find "$state" -maxdepth 1 -name 'statusline-*' -mtime +7 -delete 2>/dev/null; fi
 out=$(jq -r --arg cur "$cur" --arg loc "$loc" --arg seen "$seen" '
-  def ok: type=="object" and (.used_percentage|type)=="number" and (.resets_at|type)=="number";
+  def ok: type=="object" and (.used_percentage|type)=="number" and (.resets_at|type)=="number" and .resets_at > 1e9 and .resets_at < 1e10;   # unix-секунды
   def win: if type=="object" then with_entries(select((.key=="five_hour" or .key=="seven_day") and (.value|ok))) else {} end;
   def key: with_entries(.value |= [.resets_at, (.used_percentage|floor)]);
   def newer($m): reduce ($m|to_entries[]) as $e (.; if ((.[$e.key].saved_at // 0) <= $e.value.saved_at) then .[$e.key] = $e.value else . end);
@@ -40,7 +40,7 @@ out=$(jq -r --arg cur "$cur" --arg loc "$loc" --arg seen "$seen" '
 ' <<< "$in" 2>/dev/null) || { echo "statusline: jq error"; exit 0; }
 { IFS= read -r rl; IFS= read -r shr; IFS= read -r sn; IFS= read -r line; } <<< "$out"
 w(){ tmp="$1.$$"; printf '%s\n' "$2" > "$tmp" 2>/dev/null && mv -f "$tmp" "$1" 2>/dev/null || rm -f "$tmp" 2>/dev/null; }
-[ -n "$rl" ] && { mkdir -p "$(dirname "$f")" 2>/dev/null; w "$f" "$rl"; }
+[ -n "$rl" ] && { mkdir -p "${f%/*}" 2>/dev/null; w "$f" "$rl"; }
 [ -n "$shr" ] && [ -d "$shared" ] && w "$hf" "$shr"
 [ -n "$sn" ] && mkdir -p "$state" 2>/dev/null && w "$seenf" "$sn"
 printf '%s\n' "${line:- }"
