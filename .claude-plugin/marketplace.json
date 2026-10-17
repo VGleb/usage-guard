@@ -1,0 +1,16 @@
+{
+  "name": "usage-guard",
+  "owner": {
+    "name": "Gleb Voronov"
+  },
+  "plugins": [
+    {
+      "name": "usage-guard",
+      "source": "./",
+      "description": "Заранее останавливает Claude Code при достижении порога лимита подписки и планирует продолжение после сброса"
+    }
+  ],
+  "metadata": {
+    "description": "Остановка Claude Code по порогу лимита подписки с продолжением после сброса"
+  }
+}

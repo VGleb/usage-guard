@@ -1,0 +1,8 @@
+{
+  "name": "usage-guard",
+  "description": "Заранее останавливает Claude Code при достижении порога лимита подписки (5-часовое или недельное окно) и планирует продолжение после сброса",
+  "version": "1.0.0",
+  "author": { "name": "Глеб Воронов" },
+  "license": "MIT",
+  "keywords": ["limits", "usage", "rate-limit", "statusline", "hooks"]
+}
